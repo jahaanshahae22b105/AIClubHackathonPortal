@@ -9,7 +9,7 @@ import {
   } from '@chakra-ui/react';
 import { DASHBOARD, LOGIN } from "lib/routes";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import {useAuth, useRegister} from "hooks/auth";
+import {useAuth, useRegister, useSignInWithG} from "hooks/auth";
 import { useForm } from "react-hook-form";
 import { emailValidate, passwordValidate, usernameValidate } from "utils/form-validate";
 import {FaGoogle} from 'react-icons/fa'
@@ -55,6 +55,23 @@ export default function Register(){
 
         if (succeeded) reset();
     }
+
+
+
+    const {signInWithGoogle, siwgIsLoading} = useSignInWithG();
+    async function handleSignInWithGoogle () 
+    {
+        const succeeded = await signInWithGoogle({
+            redirectTo: DASHBOARD,
+        });
+
+        if (succeeded) reset();
+
+    }
+
+
+
+
 
 
     return (
@@ -124,7 +141,7 @@ export default function Register(){
                     </Text>
                 </Center>
                 <Center>
-                    <IconButton mt="2" icon={<FaGoogle/>} borderRadius="50vh" size="md" fontSize="12" width="vh" colorScheme="gray"  isLoading={false}>
+                    <IconButton mt="2" icon={<FaGoogle/>} onClick={handleSignInWithGoogle} borderRadius="50vh" size="md" fontSize="12" width="vh" colorScheme="gray"  isLoading={false}>
 
                     </IconButton>
                 </Center>

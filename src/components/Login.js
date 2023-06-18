@@ -1,4 +1,4 @@
-import { Box, Button, Center, Heading, IconButton } from "@chakra-ui/react";
+import { Box, Button, Center, Heading, IconButton, useToast } from "@chakra-ui/react";
 import {
     FormControl,
     FormLabel,
@@ -9,12 +9,15 @@ import {
   } from '@chakra-ui/react';
 import { DASHBOARD, REGISTER } from "lib/routes";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import {useAuth, useLogin} from "hooks/auth";
+import { useAuth, useLogin, useSignInWithG} from "hooks/auth";
 import { useForm } from "react-hook-form";
 import { emailValidate, passwordValidate } from "utils/form-validate";
 import { FaGoogle } from "react-icons/fa";
 import { useEffect } from "react";
 import { TextField } from "@mui/material";
+import { signInWithPopup } from "firebase/auth";
+import { auth, provider } from "lib/firebase";
+
 
 export default function Login(){
 
@@ -22,6 +25,7 @@ export default function Login(){
     //to check if user is already logged in. navigate to dashboard.
     const navigate = useNavigate();
     const {user, isLoading: authIsLoading} = useAuth();
+    const toast = useToast();
     useEffect(() => {
 
         if (user)
@@ -52,6 +56,18 @@ export default function Login(){
         });
 
         if (succeeded) reset();
+    }
+
+
+    const {signInWithGoogle, siwgIsLoading} = useSignInWithG();
+    async function handleSignInWithGoogle () 
+    {
+        const succeeded = await signInWithGoogle({
+            redirectTo: DASHBOARD,
+        });
+
+        if (succeeded) reset();
+
     }
 
 
@@ -110,7 +126,7 @@ export default function Login(){
                     </Text>
                 </Center>
                 <Center>
-                    <IconButton mt="2" icon={<FaGoogle/>} borderRadius="50vh" size="md" fontSize="12" width="vh" colorScheme="gray"  isLoading={false}>
+                    <IconButton mt="2" icon={<FaGoogle/>} onClick={handleSignInWithGoogle} borderRadius="50vh" size="md" fontSize="12" width="vh" colorScheme="gray"  isLoading={false}>
 
                     </IconButton>
                 </Center>

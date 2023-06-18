@@ -1,13 +1,15 @@
-import { useToast } from '@chakra-ui/react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from 'lib/firebase';
+import {  useToast } from '@chakra-ui/react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, db, provider } from 'lib/firebase';
 import { DASHBOARD, LOGIN } from 'lib/routes';
-import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
+import { useAuthState, useCreateUserWithEmailAndPassword, useSignOut } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { setDoc, doc, getDoc} from 'firebase/firestore';
 import isUsernameExists from 'utils/isUsernameExists';
 import isEmailExists from 'utils/isEmailExists';
+import { extractUsername } from 'utils/extractUsername';
+import { generateRandomChars } from 'utils/generateRandomCharacters';
 
 export function useAuth() {
     const [authUser, authLoading, error] = useAuthState(auth);
@@ -71,6 +73,118 @@ export function useLogin () {
 
     return {login, isLoading};
 }
+
+
+export function useSignInWithG () {
+  const [isLoading, setLoading] = useState(false);
+  const toast =useToast();
+  const navigate = useNavigate();
+
+  async function signInWithGoogle({redirectTo=DASHBOARD}) 
+  {
+      setLoading(true);
+
+      try {
+          const userCredential = await signInWithPopup(auth,provider);
+
+          const email = userCredential.user.email;
+          const username = extractUsername(userCredential.user.email);
+          const password=generateRandomChars(8);
+
+          const emailExists = await isEmailExists(email);
+          
+          if (emailExists)
+          {
+            toast({
+              title: "Google Sign In Successful",
+              description: "You are logged in",
+              status: "success",
+              isClosable: true,
+              position: "bottom",
+              duration: 3000,
+            });
+              
+              navigate(redirectTo);
+          } 
+          else 
+          {
+            try 
+            {     
+              await setDoc(doc(db, "users", userCredential.user.uid), {
+                id: userCredential.user.uid,
+                username: username.toLowerCase(),
+                email: email,
+                avatar: "",
+                date: Date.now(),
+              });
+      
+              toast({
+                title: "Google Account connected.",
+                description: "You are now logged in",
+                status: "success",
+                isClosable: true,
+                position: "bottom",
+                duration: 3000,
+              });
+      
+              navigate(redirectTo);
+              
+            } 
+            catch (error) 
+            {
+              toast({
+                title: "Signing Up failed",
+                description: error.message,
+                status: "error",
+                isClosable: true,
+                position: "bottom",
+                duration: 5000,
+              });
+            } 
+          }
+          
+      }
+      catch (error) {
+          toast({
+              title: "Login Failed.",
+              status: "error",
+              description: error.message,
+              isClosable: true,
+              position: "bottom",
+              duration: 5000,
+          });
+          setLoading(false);
+          return false;
+      }
+      finally
+      {
+        setLoading(false);
+      }
+
+      setLoading(false);
+      return true;
+  }
+
+  return {signInWithGoogle, isLoading};
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -189,3 +303,10 @@ export function useLogout() {
     return {logout, isLoading};
 
 }
+
+
+
+
+
+
+
